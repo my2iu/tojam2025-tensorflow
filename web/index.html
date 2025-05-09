@@ -1,0 +1,74 @@
+<html>
+<head>
+<style>
+.mainframe {
+	aspect-ratio: 16 / 9;
+	width: 100svw;
+	max-width: 100svw;
+	max-height: 100svh;
+	background-color: #eee;
+	padding; 0;
+	margin: 0;
+	position: relative;
+	
+}
+body {
+	padding: 0;
+	margin: 0;
+}
+.mainframe > div {
+	display: none;
+}
+.configurevideo video {
+	transform: scaleX(-1);
+}
+
+.mainframe .game {
+	background-color: #ddd;
+	aspect-ratio: 16 / 9;
+	height: 100%;
+	max-width: 100svw;
+	max-height: 100svh;
+	padding; 0;
+	margin: 0;
+	position: relative;
+}
+
+.mainframe .game canvas,
+.mainframe .game video {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	top: 0;
+	height: 100%;
+}
+
+.mainframe .game video {
+	transform: scaleX(-1);
+}}
+</style>
+<script src="main.js"></script>
+</head>
+<body>
+<div class="mainframe">
+
+<div class="configurevideo">
+	<div class="enableWebcamPermission">Please allow this web page to access your webcam</div>
+	<div class="chooseCamera" style="display: none;">
+		Choose a webcam: <select></select>
+	</div>
+	<div class="go" style="visibility: hidden;"><a href="javascript:void(0)">Go</a></div>
+	<video autoplay="true" style="max-width: 50svmin; max-height: 50svmin;"></video>
+</div>
+
+<div class="game">
+	<video autoplay="true"></video>
+	<canvas width="640" height="360"></canvas>
+</div>
+
+</div><!--mainframe-->
+<div class="debug">
+<a class="debugStop" href="javascript:void(0)">Stop</a>
+</div>
+</body>
+</html>
