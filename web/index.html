@@ -1,5 +1,22 @@
 <html>
 <head>
+<!-- Tensorflow.js libraries for pose detection -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+
+<!-- code for the actual game -->
+<script src="main.js"></script>
+<script src="game.js"></script>
+<script>
+window.addEventListener('load', () => {
+	//setupVideo();
+	startGame(null);
+});
+
+</script>
+
 <style>
 .mainframe {
 	aspect-ratio: 16 / 9;
@@ -47,7 +64,6 @@ body {
 	transform: scaleX(-1);
 }}
 </style>
-<script src="main.js"></script>
 </head>
 <body>
 <div class="mainframe">
@@ -56,9 +72,10 @@ body {
 	<div class="enableWebcamPermission">Please allow this web page to access your webcam</div>
 	<div class="chooseCamera" style="display: none;">
 		Choose a webcam: <select></select>
+		<p><i>Try to position yourself so that your entire body is visible</i></p>
 	</div>
 	<div class="go" style="visibility: hidden;"><a href="javascript:void(0)">Go</a></div>
-	<video autoplay="true" style="max-width: 50svmin; max-height: 50svmin;"></video>
+	<video autoplay="true" style="max-width: 80svw; max-height: 70svh;"></video>
 </div>
 
 <div class="game">

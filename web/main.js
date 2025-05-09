@@ -1,9 +1,5 @@
 "use strict";
 
-window.addEventListener('load', () => {
-	setupVideo();
-	
-});
 
 function setupVideo() 
 {
@@ -93,32 +89,3 @@ function setupVideo()
 }
 
 
-function startGame(webcamDeviceId)
-{
-	// Show the game div
-	document.querySelector('.game').style.display = 'block';
-	
-	// Start up the video feed
-	let currentWebcamStream = null;
-	let constraints = {
-		video: {
-			deviceId: {exact: webcamDeviceId},
-			width: {exact: 640},
-			height: {exact: 360}
-		}
-	};
-	navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-		currentWebcamStream = stream;
-		document.querySelector('.game video').srcObject = stream;
-	});
-	
-	// Hook the debug stop button
-	document.querySelector('.debug a.debugStop').onclick = () => {
-		if (currentWebcamStream != null) {
-			currentWebcamStream.getTracks().forEach(track => {
-				track.stop();
-			});
-			currentWebcamStream = null;
-		}
-	}
-}
