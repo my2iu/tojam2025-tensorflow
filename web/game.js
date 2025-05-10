@@ -84,61 +84,7 @@ function loadedAndReady()
 			if (pose == null)
 				return;
 			// We have a valid pose, so draw the robot
-			robotParts.head.draw(ctx, 
-				(pose.l.shoulder.x + pose.r.shoulder.x) / 2, 
-				(pose.l.shoulder.y + pose.r.shoulder.y) / 2, 
-				pose.nose.x, 
-				pose.nose.y);
-			robotParts.torso.draw(ctx, 
-				(pose.l.shoulder.x + pose.r.shoulder.x) / 2, 
-				(pose.l.shoulder.y + pose.r.shoulder.y) / 2, 
-				(pose.l.hip.x + pose.r.hip.x) / 2, 
-				(pose.l.hip.y + pose.r.hip.y) / 2);
-			robotParts.hip.draw(ctx, 
-				(pose.l.hip.x + pose.r.hip.x) / 2, 
-				(pose.l.hip.y + pose.r.hip.y) / 2,
-				(pose.l.shoulder.x + pose.r.shoulder.x) / 2, 
-				(pose.l.shoulder.y + pose.r.shoulder.y) / 2);
-			robotParts.upperarm.draw(ctx, 
-				pose.l.shoulder.x,
-				pose.l.shoulder.y,
-				pose.l.elbow.x,
-				pose.l.elbow.y);
-			robotParts.upperarm.draw(ctx, 
-				pose.r.shoulder.x,
-				pose.r.shoulder.y,
-				pose.r.elbow.x,
-				pose.r.elbow.y);
-			robotParts.forearm.draw(ctx, 
-				pose.l.elbow.x,
-				pose.l.elbow.y,
-				pose.l.wrist.x,
-				pose.l.wrist.y);
-			robotParts.forearm.draw(ctx, 
-				pose.r.elbow.x,
-				pose.r.elbow.y,
-				pose.r.wrist.x,
-				pose.r.wrist.y);
-			robotParts.thigh.draw(ctx, 
-				pose.l.hip.x,
-				pose.l.hip.y,
-				pose.l.knee.x,
-				pose.l.knee.y);
-			robotParts.thigh.draw(ctx, 
-				pose.r.hip.x,
-				pose.r.hip.y,
-				pose.r.knee.x,
-				pose.r.knee.y);
-			robotParts.calf.draw(ctx, 
-				pose.l.knee.x,
-				pose.l.knee.y,
-				pose.l.ankle.x,
-				pose.l.ankle.y);
-			robotParts.calf.draw(ctx, 
-				pose.r.knee.x,
-				pose.r.knee.y,
-				pose.r.ankle.x,
-				pose.r.ankle.y);
+			drawRobot(pose);
 			
 		} finally {
 			ctx.restore();
@@ -260,6 +206,114 @@ function drawBlackOutlineText(text, x, y)
 
 }
 
+function drawArm(sidePose)
+{
+	robotParts.upperarm.draw(ctx, 
+		sidePose.shoulder.x,
+		sidePose.shoulder.y,
+		sidePose.elbow.x,
+		sidePose.elbow.y);
+	robotParts.forearm.draw(ctx, 
+		sidePose.elbow.x,
+		sidePose.elbow.y,
+		sidePose.wrist.x,
+		sidePose.wrist.y);
+}
+
+function drawLeg(sidePose)
+{
+	robotParts.thigh.draw(ctx, 
+		sidePose.hip.x,
+		sidePose.hip.y,
+		sidePose.knee.x,
+		sidePose.knee.y);
+	robotParts.calf.draw(ctx, 
+		sidePose.knee.x,
+		sidePose.knee.y,
+		sidePose.ankle.x,
+		sidePose.ankle.y);
+}
+
+function drawRobot(pose)
+{
+	const hipMidX = (pose.l.hip.x + pose.r.hip.x) / 2;
+	const hipMidY = (pose.l.hip.y + pose.r.hip.y) / 2;
+	const shoulderMidX = (pose.l.shoulder.x + pose.r.shoulder.x) / 2;
+	const shoulderMidY = (pose.l.shoulder.y + pose.r.shoulder.y) / 2;
+	// Calculate our own anchor for the head instead of using the nose
+	let headAnchorDist = length(robotParts.head.pivot.x - robotParts.head.anchor.x, robotParts.head.pivot.y - robotParts.head.anchor.y);
+	let torsoAnchorDist = length(robotParts.torso.pivot.x - robotParts.torso.anchor.x, robotParts.torso.pivot.y - robotParts.torso.anchor.y);
+	let headTorsoRatio = headAnchorDist / torsoAnchorDist;
+	let headAnchorX = (shoulderMidX - hipMidX) * headTorsoRatio + shoulderMidX;
+	let headAnchorY = (shoulderMidY - hipMidY) * headTorsoRatio + shoulderMidY;
+	// Figure out the head facing based on the nose
+	let headAnchorRelative = [headAnchorX - shoulderMidX, headAnchorY - shoulderMidY];
+	let headAnchorRelativeLength = length(headAnchorRelative[0], headAnchorRelative[1]);
+	let headAnchorRelativeUnit = [headAnchorRelative[0] / headAnchorRelativeLength, headAnchorRelative[1] / headAnchorRelativeLength];
+	let noseRelative = [pose.nose.x - shoulderMidX, pose.nose.y - shoulderMidY];
+	let noseDotProduct = noseRelative[0] * headAnchorRelativeUnit[1] + noseRelative[1] * -headAnchorRelativeUnit[0];
+	let headFacing = noseDotProduct / ((robotParts.head.width + 1) * 0.15);
+	if (headFacing < -1) 
+		headFacing = -1;
+	else if (headFacing > 1)
+		headFacing = 1;
+	else
+		headFacing = 0;
+	// Calculate a general facing, and draw the appropriate arms
+	// and legs behind the body
+	const facing = headFacing;
+
+	const leftBehind = (facing > 0);
+	const rightBehind = (facing < 0);
+	if (leftBehind)
+	{
+		drawArm(pose.l);
+		drawLeg(pose.l);
+	}
+	else if (rightBehind)
+	{
+		drawArm(pose.r);
+		drawLeg(pose.r);
+	}
+	robotParts.torso.drawTwoPivot(ctx, 
+		pose.l.shoulder.x, pose.l.shoulder.y,
+		pose.r.shoulder.x, pose.r.shoulder.y, 
+		hipMidX, 
+		hipMidY);
+	robotParts.hip.drawTwoPivot(ctx, 
+		pose.l.hip.x, pose.l.hip.y,
+		pose.r.hip.x, pose.r.hip.y, 
+		shoulderMidX, 
+		shoulderMidY);
+	if (headFacing < 0)
+		robotParts.headside.draw(ctx, 
+			(pose.l.shoulder.x + pose.r.shoulder.x) / 2, 
+			(pose.l.shoulder.y + pose.r.shoulder.y) / 2, 
+			headAnchorX, 
+			headAnchorY);
+	else if (headFacing > 0)
+		robotParts.headside.drawFlipped(ctx, 
+			(pose.l.shoulder.x + pose.r.shoulder.x) / 2, 
+			(pose.l.shoulder.y + pose.r.shoulder.y) / 2, 
+			headAnchorX, 
+			headAnchorY);
+	else
+		robotParts.head.draw(ctx, 
+			(pose.l.shoulder.x + pose.r.shoulder.x) / 2, 
+			(pose.l.shoulder.y + pose.r.shoulder.y) / 2, 
+			headAnchorX, 
+			headAnchorY);
+	if (!leftBehind)
+	{
+		drawArm(pose.l);
+		drawLeg(pose.l);
+	}
+	if (!rightBehind)
+	{
+		drawArm(pose.r);
+		drawLeg(pose.r);
+	}
+}
 
 class RobotPart{
 	constructor(file, pivotX, pivotY, anchorX, anchorY) {
@@ -282,21 +336,49 @@ class RobotPart{
 		ctx.save();
 		ctx.translate(pivotX, pivotY);
 		ctx.rotate(Math.atan2(anchorY - pivotY, anchorX - pivotX) - Math.atan2(this.anchor.y - this.pivot.y, this.anchor.x - this.pivot.x));
-		const scale = this.length(pivotX - anchorX, pivotY - anchorY) / this.length(this.pivot.x - this.anchor.x, this.pivot.y - this.anchor.y);
+		const scale = length(pivotX - anchorX, pivotY - anchorY) / length(this.pivot.x - this.anchor.x, this.pivot.y - this.anchor.y);
 		ctx.scale(scale, scale);
 		ctx.translate(-this.pivot.x, -this.pivot.y);
 		ctx.drawImage(this.img, 0, 0);
 		ctx.restore();
-		
 	}
-	length(dx, dy) {
-		return Math.sqrt(dx * dx + dy * dy);
+	drawFlipped(ctx, pivotX, pivotY, anchorX, anchorY) {
+		if (!this.ready) return;
+		ctx.save();
+		ctx.translate(pivotX, pivotY);
+		ctx.rotate(Math.atan2(anchorY - pivotY, anchorX - pivotX) - Math.atan2(this.anchor.y - this.pivot.y, this.anchor.x - this.pivot.x));
+		const scale = length(pivotX - anchorX, pivotY - anchorY) / length(this.pivot.x - this.anchor.x, this.pivot.y - this.anchor.y);
+		ctx.scale(-scale, scale);
+		ctx.translate(-this.pivot.x, -this.pivot.y);
+		ctx.drawImage(this.img, 0, 0);
+		ctx.restore();
+	}
+	drawTwoPivot(ctx, pivotX1, pivotY1, pivotX2, pivotY2, anchorX, anchorY) {
+		if (!this.ready) return;
+		ctx.save();
+		const pivotX = (pivotX1 + pivotX2) / 2;
+		const pivotY = (pivotY1 + pivotY2) / 2;
+		ctx.translate(pivotX, pivotY);
+		ctx.rotate(Math.atan2(anchorY - pivotY, anchorX - pivotX) - Math.atan2(this.anchor.y - this.pivot.y, this.anchor.x - this.pivot.x));
+		const scaleH = length(pivotX - anchorX, pivotY - anchorY) / length(this.pivot.x - this.anchor.x, this.pivot.y - this.anchor.y);
+		const widthHeightRatio = length(pivotX2 - pivotX1, pivotY2 - pivotY1) / length(pivotX - anchorX, pivotY - anchorY);
+		const mappedWidth = 20 + widthHeightRatio * length(pivotX - anchorX, pivotY - anchorY);
+		const scaleW = mappedWidth / this.width;
+		ctx.scale(scaleW, scaleH);
+		ctx.translate(-this.pivot.x, -this.pivot.y);
+		ctx.drawImage(this.img, 0, 0);
+		ctx.restore();
 	}
 }
 
+function length(dx, dy) {
+	return Math.sqrt(dx * dx + dy * dy);
+}
+
+
 const robotParts = {
 	head: new RobotPart('imgs/robot/head.png', 20, 61, 20, 26),
-	headside: new RobotPart('imgs/robot/headside.png', 16, 61, 32, 34),
+	headside: new RobotPart('imgs/robot/headside.png', 16, 61, 16, 26),
 	torso: new RobotPart('imgs/robot/torso.png', 55, 4, 55, 130),
 	hip: new RobotPart('imgs/robot/hip.png', 55, 130, 55, 4),
 	upperarm: new RobotPart('imgs/robot/upperarm.png', 10, 10, 10, 85),
