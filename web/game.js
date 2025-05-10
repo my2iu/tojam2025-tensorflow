@@ -68,6 +68,7 @@ function loadedAndReady()
 {
 	// Start game loop
 	animationFrameRequest = requestAnimationFrame(gameLoop);
+	let poseOk = false;
 	
 	function gameLoop()
 	{
@@ -80,9 +81,18 @@ function loadedAndReady()
 		ctx.save();
 		try {
 			ctx.clearRect(0, 0, 640, 360);
-			let pose = validatePose();
+			// Once we have a good lock on the pose, we relax our pose
+			// tolerances so that we can have a few bad pose detections.
+			// But if we lose the pose, we revert back to requiring a good
+			// match again
+			let minPosePartScore = (poseOk ? 0.05 : 0.25);
+			let pose = validatePose(minPosePartScore);
 			if (pose == null)
+			{
+				poseOk = false;
 				return;
+			}
+			poseOk = true;
 			// We have a valid pose, so draw the robot
 			drawRobot(pose);
 			
@@ -102,7 +112,7 @@ function startPoseDetection()
 	});
 }
 
-function validatePose()
+function validatePose(minScore)
 {
 	// TODO: Clean this up so that messages stay shown for longer
 	// and it will smooth over occasional dropouts
@@ -116,7 +126,6 @@ function validatePose()
 	}
 	
 	// Check for a few extremities
-	const minScore = 0.2;
 	const figure = currentPose[0];
 	let validated = true;
 	msgY += msgYSkip;
@@ -151,6 +160,7 @@ function validatePose()
 		drawMarker(figure.keypoints[16]);
 		return null;
 	}
+	
 	
 	// Fix-up the poses
 	return {
@@ -261,6 +271,7 @@ function drawRobot(pose)
 		headFacing = 0;
 	// Calculate a general facing, and draw the appropriate arms
 	// and legs behind the body
+	// TODO: Use leg bending to determine facing
 	const facing = headFacing;
 
 	const leftBehind = (facing > 0);
