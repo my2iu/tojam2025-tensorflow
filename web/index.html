@@ -11,7 +11,10 @@
 <script src="game.js"></script>
 <script>
 window.addEventListener('load', () => {
+	// Normal game start-up
 	//setupVideo();
+	
+	// For starting right into the game without showing the camera selection screen
 	startGame(null);
 });
 
@@ -60,6 +63,10 @@ body {
 	height: 100%;
 }
 
+.mainframe .game canvas {
+	image-rendering: pixelated; 
+}
+
 .mainframe .game video {
 	transform: scaleX(-1);
 }}
@@ -85,7 +92,10 @@ body {
 
 </div><!--mainframe-->
 <div class="debug">
-<a class="debugStop" href="javascript:void(0)">Stop</a>
+<a class="debugStop" href="javascript:void(0)">Stop</a> &nbsp;&nbsp;&nbsp;
+<a href="javascript:void(0)" onclick="document.querySelector('.game video').style.zIndex = 2; document.querySelector('.game video').style.opacity = 0.5;">overlay</a>
+<a href="javascript:void(0)" onclick="document.querySelector('.game video').style.zIndex = 2; document.querySelector('.game video').style.left='70%'; document.querySelector('.game video').style.top='70%'; document.querySelector('.game video').style.width='30%'; document.querySelector('.game video').style.height='30%';">pip</a>
+<a href="javascript:void(0)" onclick="document.querySelector('.game video').style.left='50%'; document.querySelector('.game video').style.width='50%'; document.querySelector('.game video').style.height='50%'; document.querySelector('.game canvas').style.left='0%'; document.querySelector('.game canvas').style.width='50%'; document.querySelector('.game canvas').style.height='50%';">side-by-side</a>
 </div>
 </body>
 </html>

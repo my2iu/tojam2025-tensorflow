@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="tojam2025" basedir=".">
+
+	<target name="zip">
+	    <zip destfile="tojam2025.zip" basedir="web"/>
+	</target>
+	
+</project>
+
