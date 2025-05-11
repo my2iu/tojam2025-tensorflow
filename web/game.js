@@ -9,6 +9,7 @@ let poseDetector;
 let poseDetectorRunning = false;
 let currentPose;
 let animationFrameRequest;
+let debugTestVideoImage = null;
 
 window.startGame = function(webcamDeviceId) {
 	// Show the game div
@@ -45,6 +46,23 @@ window.startGame = function(webcamDeviceId) {
 			cancelAnimationFrame(animationFrameRequest);
 	}
 	
+	// Hook the debug testvideo Button
+	document.querySelector('.debug a.debugTestVideo').onclick = (e) => {
+		if (currentWebcamStream != null) {
+			currentWebcamStream.getTracks().forEach(track => {
+				track.stop();
+			});
+			currentWebcamStream = null;
+		}
+		let testImage = new Image();
+		testImage.onload = () => {
+			debugTestVideoImage = testImage;
+		};
+		testImage.src = 'testimage.jpg';
+		e.preventDefault();
+		
+	};
+	
 	// Display a loading message
 	ctx.save();
 	ctx.font = '50px sans-serif';
@@ -67,13 +85,18 @@ async function loadTensorFlow()
 function loadedAndReady()
 {
 	// Start game loop
+	let lastTime = performance.now();
 	animationFrameRequest = requestAnimationFrame(gameLoop);
 	let poseOk = false;
+	let gameData = {};
+	let levelGameLoop = startLevel1(gameData);
 	
 	function gameLoop()
 	{
 		// Set-up next game loop, and start pose detector
 		let time = performance.now();
+		let deltaTime = time - lastTime;
+		lastTime = time;
 		animationFrameRequest = requestAnimationFrame(gameLoop);
 		startPoseDetection();
 		
@@ -93,8 +116,8 @@ function loadedAndReady()
 				return;
 			}
 			poseOk = true;
-			// We have a valid pose, so draw the robot
-			drawRobot(pose);
+			
+			levelGameLoop(ctx, deltaTime, pose);
 			
 		} finally {
 			ctx.restore();
@@ -106,10 +129,17 @@ function startPoseDetection()
 {
 	if (poseDetectorRunning) return;
 	poseDetectorRunning = true;
-	poseDetector.estimatePoses(videoEl).then((poses) => {
-		poseDetectorRunning = false;
-		currentPose = poses;
-	});
+	if (debugTestVideoImage != null) {
+		poseDetector.estimatePoses(debugTestVideoImage).then((poses) => {
+			poseDetectorRunning = false;
+			currentPose = poses;
+		});
+	} else {
+		poseDetector.estimatePoses(videoEl).then((poses) => {
+			poseDetectorRunning = false;
+			currentPose = poses;
+		});
+	}
 }
 
 function validatePose(minScore)
@@ -244,7 +274,7 @@ function drawLeg(sidePose)
 		sidePose.ankle.y);
 }
 
-function drawRobot(pose)
+window.drawRobot = function(pose)
 {
 	const hipMidX = (pose.l.hip.x + pose.r.hip.x) / 2;
 	const hipMidY = (pose.l.hip.y + pose.r.hip.y) / 2;
@@ -324,7 +354,7 @@ function drawRobot(pose)
 		drawArm(pose.r);
 		drawLeg(pose.r);
 	}
-}
+};
 
 class RobotPart{
 	constructor(file, pivotX, pivotY, anchorX, anchorY) {

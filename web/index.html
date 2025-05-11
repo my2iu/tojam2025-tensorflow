@@ -9,6 +9,7 @@
 <!-- code for the actual game -->
 <script src="main.js"></script>
 <script src="game.js"></script>
+<script src="levels.js"></script>
 <script>
 window.addEventListener('load', () => {
 	// Normal game start-up
@@ -96,6 +97,9 @@ body {
 <a href="javascript:void(0)" onclick="document.querySelector('.game video').style.zIndex = 2; document.querySelector('.game video').style.opacity = 0.5;">overlay</a>
 <a href="javascript:void(0)" onclick="document.querySelector('.game video').style.zIndex = 2; document.querySelector('.game video').style.left='70%'; document.querySelector('.game video').style.top='70%'; document.querySelector('.game video').style.width='30%'; document.querySelector('.game video').style.height='30%';">pip</a>
 <a href="javascript:void(0)" onclick="document.querySelector('.game video').style.left='50%'; document.querySelector('.game video').style.width='50%'; document.querySelector('.game video').style.height='50%'; document.querySelector('.game canvas').style.left='0%'; document.querySelector('.game canvas').style.width='50%'; document.querySelector('.game canvas').style.height='50%';">side-by-side</a>
+&nbsp;&nbsp;&nbsp;
+<a href="javascript:void(0)" class="debugTestVideo">testvideo</a>
+
 </div>
 </body>
 </html>
