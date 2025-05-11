@@ -24,8 +24,11 @@ window.startLevel1 = function(gameData)
 		
 		// Simulate other objects
 		for (let obj of gameObjects) {
-			obj.run(deltaTime, totalTime);
+			obj.run(deltaTime, totalTime, pose);
 		}
+
+		// Remove dead objects
+		gameObjects = gameObjects.filter(obj => !obj.isDead);
 
 		// We have a valid pose, so draw the robot
 		drawRobot(pose);
@@ -40,7 +43,10 @@ window.startLevel1 = function(gameData)
 
 class GameObject
 {
-	run(deltaTime, elapsedTime) {
+	constructor() {
+		this.isDead = false;
+	}
+	run(deltaTime, elapsedTime, pose) {
 	}
 	render(ctx) {
 	}
@@ -64,7 +70,24 @@ class Tank extends SpriteObject
 	constructor(x, y) {
 		super(TankSprite, x, y);
 	}
-	run(deltaTime, elapsedTime) {
+	run(deltaTime, elapsedTime, pose) {
+		// Object should die if it is stepped on or punched
+		// Use an area of 20 pixels around the hand or feet
+		// Plus 50 pixels horizontally and 20 pixels vertically for hitbox
+		if (checkHit(pose.l.wrist.x, pose.l.wrist.y, this.x, this.y)
+			|| checkHit(pose.r.wrist.x, pose.r.wrist.y, this.x, this.y)
+			|| checkHit(pose.l.ankle.x, pose.l.ankle.y, this.x, this.y)
+			|| checkHit(pose.r.ankle.x, pose.r.ankle.y, this.x, this.y)) {
+				this.isDead = true;
+		}
+		
+		function checkHit(x, y, tankX, tankY) {
+			if (Math.abs(x - tankX) > 20 + 50) 
+				return false;
+			if (y - tankY < 20 && y - tankY > -20 - 20)
+				return true;
+			return false;
+		}
 	}
 }
 
@@ -92,8 +115,8 @@ class Sprite
 	}
 }
 
-let TankSprite = new Sprite('imgs/tank.png', 58, 35);
-let UfoSprite = new Sprite('imgs/ufo.png', 43, 15);
+let TankSprite = new Sprite('imgs/tank.png', 58, 35); // w:108, h:36
+let UfoSprite = new Sprite('imgs/ufo.png', 43, 15); // w:86, h:28
 let TreeSprite = new Sprite('imgs/tree.png', 18, 50);
 let TrunkSprite = new Sprite('imgs/tree.png', 16, 8);
 let BulletSprite = new Sprite('imgs/bullet.png', 4, 4);

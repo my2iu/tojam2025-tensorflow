@@ -13,10 +13,10 @@
 <script>
 window.addEventListener('load', () => {
 	// Normal game start-up
-	//setupVideo();
+	setupVideo();
 	
 	// For starting right into the game without showing the camera selection screen
-	startGame(null);
+	//startGame(null);
 });
 
 </script>
@@ -77,7 +77,7 @@ body {
 <div class="mainframe">
 
 <div class="configurevideo">
-	<div class="enableWebcamPermission">Please allow this web page to access your webcam</div>
+	<div class="enableWebcamPermission" style="font-size: x-large;">Please allow this web page to access your webcam</div>
 	<div class="chooseCamera" style="display: none;">
 		Choose a webcam: <select></select>
 		<p><i>Try to position yourself so that your entire body is visible</i></p>
