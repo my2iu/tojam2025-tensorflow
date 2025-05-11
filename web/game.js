@@ -346,13 +346,13 @@ window.drawRobot = function(pose)
 			headAnchorY);
 	if (!leftBehind)
 	{
-		drawArm(pose.l);
 		drawLeg(pose.l);
+		drawArm(pose.l);
 	}
 	if (!rightBehind)
 	{
-		drawArm(pose.r);
 		drawLeg(pose.r);
+		drawArm(pose.r);
 	}
 };
 
