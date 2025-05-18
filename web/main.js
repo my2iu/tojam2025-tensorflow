@@ -1,6 +1,16 @@
 "use strict";
 
 
+function startTitleScreen()
+{
+	document.querySelector('.titlescreen').style.display = 'block';
+	document.querySelector('.titlescreen .startGameButton a').onclick = (e) => {
+		document.querySelector('.titlescreen').style.display = 'none';
+		setupVideo();
+		e.preventDefault();
+	};
+}
+
 function setupVideo() 
 {
 	document.querySelector('.configurevideo').style.display = 'block';

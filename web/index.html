@@ -11,12 +11,22 @@
 <script src="game.js"></script>
 <script src="levels.js"></script>
 <script>
+// Clear any debug localstorage flags
+var debugBypassStart = localStorage.getItem('debugBypassStart');
+localStorage.removeItem('debugBypassStart');
+
 window.addEventListener('load', () => {
-	// Normal game start-up
-	setupVideo();
-	
-	// For starting right into the game without showing the camera selection screen
-	//startGame(null);
+	if (!debugBypassStart) 
+	{
+		// Normal game start-up
+		//setupVideo();
+		startTitleScreen();
+	}
+	else
+	{
+		// For starting right into the game without showing the camera selection screen
+		startGame(null);
+	}
 });
 
 </script>
@@ -40,6 +50,47 @@ body {
 .mainframe > div {
 	display: none;
 }
+
+.mainframe .titlescreen {
+	background-color: #87d3fa;
+	aspect-ratio: 16 / 9;
+	height: 100%;
+	max-width: 100svw;
+	max-height: 100svh;
+	padding; 0;
+	margin: 0;
+	position: relative;
+}
+.mainframe .titlescreen .title {
+	top: 20%;
+	color: #f1f54f;
+    position: absolute;
+    text-align: center;
+    display: block;
+	left: 0;
+	right: 0;
+	font-size: xxx-large;
+	font-weight: bolder;
+	font-variant: small-caps;
+}
+.mainframe .titlescreen div.startGameButton {
+	top: 80%;
+    position: absolute;
+    text-align: center;
+    display: block;
+	left: 0;
+	right: 0;
+	text-shadow: 1px 1px 3px black;
+	font-size: x-large;
+}
+.mainframe .titlescreen div.startGameButton a:link,
+.mainframe .titlescreen div.startGameButton a:visited, 
+.mainframe .titlescreen div.startGameButton a:hover,
+.mainframe .titlescreen div.startGameButton a:active {
+	text-decoration: none;
+	color: white;
+}
+
 .configurevideo video {
 	transform: scaleX(-1);
 }
@@ -76,6 +127,15 @@ body {
 <body>
 <div class="mainframe">
 
+<div class="titlescreen">
+	<div class="title">
+		Giant Robot Defender
+	</div>
+	<div class="startGameButton">
+		<a href="javascript:void(0)">Start Game</a>
+	</div>
+</div>
+
 <div class="configurevideo">
 	<div class="enableWebcamPermission" style="font-size: x-large;">Please allow this web page to access your webcam</div>
 	<div class="chooseCamera" style="display: none;">
@@ -99,6 +159,9 @@ body {
 <a href="javascript:void(0)" onclick="document.querySelector('.game video').style.left='50%'; document.querySelector('.game video').style.width='50%'; document.querySelector('.game video').style.height='50%'; document.querySelector('.game canvas').style.left='0%'; document.querySelector('.game canvas').style.width='50%'; document.querySelector('.game canvas').style.height='50%';">side-by-side</a>
 &nbsp;&nbsp;&nbsp;
 <a href="javascript:void(0)" class="debugTestVideo">testvideo</a>
+&nbsp;&nbsp;&nbsp;
+<a href="javascript:void(0)" onclick="window.location.reload(); return false;">restart</a>
+<a href="javascript:void(0)" onclick="localStorage.setItem('debugBypassStart', true); window.location.reload(); return false;">Quick debug start</a>
 
 </div>
 </body>
