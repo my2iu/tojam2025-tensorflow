@@ -5,6 +5,10 @@ function startTitleScreen()
 {
 	document.querySelector('.titlescreen').style.display = 'block';
 	document.querySelector('.titlescreen .startGameButton a').onclick = (e) => {
+		// Audio engine must be initialized on a user interaction, so 
+		// initialize it on this user interaction if it hasn't already been done
+		createAudioEngine();
+
 		document.querySelector('.titlescreen').style.display = 'none';
 		setupVideo();
 		e.preventDefault();
@@ -85,6 +89,9 @@ function setupVideo()
 	// chosen a webcam feed
 	document.querySelector('.configurevideo .go a').addEventListener('click', (e) => {
 		e.preventDefault();
+		// Audio engine must be initialized on a user interaction, so 
+		// initialize it on this user interaction if it hasn't already been done
+		createAudioEngine();
 		// Stop the webcam preview video
 		currentStream.getTracks().forEach(track => {
 			track.stop();

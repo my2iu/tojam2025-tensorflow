@@ -10,6 +10,7 @@
 <script src="main.js"></script>
 <script src="game.js"></script>
 <script src="levels.js"></script>
+<script src="sound.js"></script>
 <script>
 // Clear any debug localstorage flags
 var debugBypassStart = localStorage.getItem('debugBypassStart');
@@ -165,7 +166,8 @@ body {
 <a href="javascript:void(0)" class="debugTestVideo">testvideo</a>
 &nbsp;&nbsp;&nbsp;
 <a href="javascript:void(0)" onclick="window.location.reload(); return false;">restart</a>
-<a href="javascript:void(0)" onclick="localStorage.setItem('debugBypassStart', true); window.location.reload(); return false;">Quick debug start</a>
+<a href="javascript:void(0)" onclick="localStorage.setItem('debugBypassStart', true); window.location.reload(); return false;">restartDebug</a>
+<a href="javascript:void(0)" onclick="document.querySelector('.titlescreen').style.display = 'none'; createAudioEngine(); startGame(null); return false;">skipVideoConfig</a>
 
 </div>
 </body>

@@ -7,10 +7,12 @@
 // of different body parts
 window.startLevel1 = function(gameData)
 {
-	let gameObjects = [];
+	let level = new LevelState();
 	let totalTime = 0;
-	gameObjects.push(new Tank(500, 320));
-	gameObjects.push(new Tank(200, 335));
+	level.player = new RobotPlayer();
+	level.gameObjects.push(new Tank(500, 320));
+	level.gameObjects.push(new Tank(200, 335));
+	level.gameObjects.push(level.player);
 	
 	return (ctx, deltaTime, pose) => {
 		totalTime += deltaTime;
@@ -23,32 +25,72 @@ window.startLevel1 = function(gameData)
 		
 		
 		// Simulate other objects
-		for (let obj of gameObjects) {
-			obj.run(deltaTime, totalTime, pose);
-		}
+		level.run(deltaTime, totalTime, pose);
 
 		// Remove dead objects
-		gameObjects = gameObjects.filter(obj => !obj.isDead);
+		level.removeDeadObjects();
 
-		// We have a valid pose, so draw the robot
-		drawRobot(pose);
-
-		// display other objects
-		for (let obj of gameObjects) {
-			obj.render(ctx);
-		}
+		level.render(ctx);
 	};
 }
 
+class LevelState
+{
+	constructor() {
+		this.gameObjects = [];
+		this.player = null;
+		this.sprites = {};
+	}
+	removeDeadObjects() {
+		this.gameObjects = this.gameObjects.filter(obj => !obj.isDead);
+	}
+	run(deltaTime, totalTime, pose) {
+		for (let obj of this.gameObjects) {
+			obj.run(deltaTime, totalTime, this, pose);
+		}
+	}
+	render(ctx) {
+		// display other objects
+		for (let obj of this.gameObjects) {
+			obj.render(ctx, this);
+		}
+	}
+}
 
 class GameObject
 {
 	constructor() {
 		this.isDead = false;
 	}
-	run(deltaTime, elapsedTime, pose) {
+	run(deltaTime, elapsedTime, level, pose) {
 	}
-	render(ctx) {
+	render(ctx, level) {
+	}
+}
+
+class RobotPlayer extends GameObject
+{
+	constructor() {
+		super();
+		this.pose = null;
+		this.x = 0;
+		this.y = 0;
+	}
+	run(deltaTime, elapsedTime, level, pose) {
+		this.pose = pose;
+		// Set the x and y position based on the foot that's closest
+		// to the bottom of the screen (less likely to be a raised foot)
+		if (this.pose.r.ankle.y > this.pose.l.ankle.y) {
+			this.x = this.pose.r.ankle.x;
+			this.y = this.pose.r.ankle.y;
+		} else {
+			this.x = this.pose.l.ankle.x;
+			this.y = this.pose.l.ankle.y;
+		}
+	}
+	render(ctx, level) {
+		if (this.pose != null)
+			drawRobot(this.pose);
 	}
 }
 
@@ -60,7 +102,7 @@ class SpriteObject extends GameObject
 		this.y = y;
 		this.sprite = sprite;
 	}
-	render(ctx) {
+	render(ctx, level) {
 		this.sprite.draw(ctx, this.x, this.y);
 	}
 }
@@ -70,7 +112,7 @@ class Tank extends SpriteObject
 	constructor(x, y) {
 		super(TankSprite, x, y);
 	}
-	run(deltaTime, elapsedTime, pose) {
+	run(deltaTime, elapsedTime, level, pose) {
 		// Object should die if it is stepped on or punched
 		// Use an area of 20 pixels around the hand or feet
 		// Plus 50 pixels horizontally and 20 pixels vertically for hitbox
@@ -121,5 +163,6 @@ let TreeSprite = new Sprite('imgs/tree.png', 18, 50);
 let TrunkSprite = new Sprite('imgs/tree.png', 16, 8);
 let BulletSprite = new Sprite('imgs/bullet.png', 4, 4);
 let ExplosionSprite = new Sprite('imgs/kenneyExplosion00-20.webp', 10, 9);
+let BigExplosionSprite = new Sprite('imgs/kenneyExplosion06-100.webp', 50, 67);
 
 })();
