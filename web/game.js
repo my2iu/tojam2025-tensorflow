@@ -88,7 +88,7 @@ function loadedAndReady()
 	let lastTime = performance.now();
 	animationFrameRequest = requestAnimationFrame(gameLoop);
 	let poseOk = false;
-	let gameData = {};
+	let gameData = { nextGameLoop: null };
 	let levelGameLoop = startLevel1(gameData);
 	
 	function gameLoop()
@@ -101,9 +101,9 @@ function loadedAndReady()
 		startPoseDetection();
 		
 		// Draw the canvas
+		ctx.clearRect(0, 0, 640, 360);
 		ctx.save();
 		try {
-			ctx.clearRect(0, 0, 640, 360);
 			// Once we have a good lock on the pose, we relax our pose
 			// tolerances so that we can have a few bad pose detections.
 			// But if we lose the pose, we revert back to requiring a good
@@ -117,7 +117,17 @@ function loadedAndReady()
 			}
 			poseOk = true;
 			
-			levelGameLoop(ctx, deltaTime, pose);
+			levelGameLoop(ctx, deltaTime, pose, gameData);
+			
+			if (gameData.nextGameLoop)
+			{
+				cancelAnimationFrame(animationFrameRequest);
+				animationFrameRequest = null;
+				let setupNext = gameData.nextGameLoop;
+				gameData.nextGameLoop = null;
+				levelGameLoop = setupNext(gameData);
+				animationFrameRequest = requestAnimationFrame(gameLoop);
+			}
 			
 		} finally {
 			ctx.restore();

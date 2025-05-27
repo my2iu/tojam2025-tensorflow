@@ -78,7 +78,7 @@ class HTML5AudioEngine extends NullAudioEngine
 		this.musicClips = {};
 		this.audioClips = {};
 		this.musicPlaying = [];
-		this.isNullAudio = true;
+		this.isNullAudio = false;
 	}
 
 	canPlayType (type)

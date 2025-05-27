@@ -6,16 +6,28 @@
 // (like a magical robot transformation), then I can get measurements
 // of different body parts
 window.startLevel1 = function(gameData)
-{
-	AudioInstance.loadMp3('bigExplosion', 'audio/Boom29.mp3', 3);
+{ 
+	//AudioInstance.loadMp3('bigExplosion', 'audio/Boom29.mp3', 3);
+	AudioInstance.loadMp3('bigExplosion', 'audio/Boom9.mp3', 3);
 	let level = new LevelState();
-	let totalTime = 0;
 	level.player = new RobotPlayer();
 	level.gameObjects.push(new Tank(500, 320).scheduleMove(3000, 640, 320, 500));
 	level.gameObjects.push(new Tank(200, 335));
 	level.gameObjects.push(level.player);
+	level.numEnemies = 2;
+	level.nextLevel = startLevel1;
 	
-	return (ctx, deltaTime, pose) => {
+	return makeStandardGameLoopForLevel(level);
+}
+
+window.startLevel2 = function(gameData)
+{
+}
+
+function makeStandardGameLoopForLevel(level)
+{
+	let totalTime = 0;
+	return (ctx, deltaTime, pose, gameData) => {
 		totalTime += deltaTime;
 		
 		// Draw a background
@@ -31,7 +43,15 @@ window.startLevel1 = function(gameData)
 		// Remove dead objects
 		level.removeDeadObjects();
 
+		// Render everything
 		level.render(ctx);
+		
+		// Check if the level is over and we should transition
+		if (level.endLevelTime >= 0 && totalTime > level.endLevelTime
+			&& level.nextLevel)
+		{
+			gameData.nextGameLoop = level.nextLevel;
+		}
 	};
 }
 
@@ -41,6 +61,9 @@ class LevelState
 		this.gameObjects = [];
 		this.player = null;
 		this.sprites = {};
+		this.numEnemies = 0;
+		this.endLevelTime = -1;
+		this.nextLevel = null;
 	}
 	removeDeadObjects() {
 		this.gameObjects = this.gameObjects.filter(obj => !obj.isDead);
@@ -49,6 +72,8 @@ class LevelState
 		for (let obj of this.gameObjects) {
 			obj.run(deltaTime, totalTime, this, pose);
 		}
+		if (this.numEnemies == 0 && this.endLevelTime < 0)
+			this.endLevelTime = totalTime + 1500;
 	}
 	render(ctx) {
 		// display other objects
@@ -128,7 +153,10 @@ class Tank extends SpriteObject
 		if (this.explosionStart >= 0)
 		{
 			if (elapsedTime - this.explosionStart > 300)
+			{
 				this.isDead = true;
+				level.numEnemies--;
+			}
 			return;
 		}
 
