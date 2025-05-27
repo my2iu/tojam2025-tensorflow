@@ -7,10 +7,11 @@
 // of different body parts
 window.startLevel1 = function(gameData)
 {
+	AudioInstance.loadMp3('bigExplosion', 'audio/Boom29.mp3', 3);
 	let level = new LevelState();
 	let totalTime = 0;
 	level.player = new RobotPlayer();
-	level.gameObjects.push(new Tank(500, 320));
+	level.gameObjects.push(new Tank(500, 320).scheduleMove(3000, 640, 320, 500));
 	level.gameObjects.push(new Tank(200, 335));
 	level.gameObjects.push(level.player);
 	
@@ -111,8 +112,26 @@ class Tank extends SpriteObject
 {
 	constructor(x, y) {
 		super(TankSprite, x, y);
+		this.facing = 1;
+		this.explosionStart = -1;
+		this.startTime = 0;
+		this.destX = x;
+	}
+	scheduleMove(time, x, y, destX) {
+		this.startTime = time;
+		this.x = x;
+		this.y = y;
+		this.destX = destX;
+		return this;
 	}
 	run(deltaTime, elapsedTime, level, pose) {
+		if (this.explosionStart >= 0)
+		{
+			if (elapsedTime - this.explosionStart > 300)
+				this.isDead = true;
+			return;
+		}
+
 		// Object should die if it is stepped on or punched
 		// Use an area of 20 pixels around the hand or feet
 		// Plus 50 pixels horizontally and 20 pixels vertically for hitbox
@@ -120,7 +139,9 @@ class Tank extends SpriteObject
 			|| checkHit(pose.r.wrist.x, pose.r.wrist.y, this.x, this.y)
 			|| checkHit(pose.l.ankle.x, pose.l.ankle.y, this.x, this.y)
 			|| checkHit(pose.r.ankle.x, pose.r.ankle.y, this.x, this.y)) {
-				this.isDead = true;
+				AudioInstance.playOneShot('bigExplosion');
+				this.explosionStart = elapsedTime;
+				return;
 		}
 		
 		function checkHit(x, y, tankX, tankY) {
@@ -130,6 +151,31 @@ class Tank extends SpriteObject
 				return true;
 			return false;
 		}
+		
+		// Do any movement
+		if (elapsedTime > this.startTime)
+		{
+			if (this.x != this.destX)
+			{
+				const MOVE_RATE = 0.05;
+				let deltaX = deltaTime * MOVE_RATE;
+				if (deltaX > Math.abs(this.x - this.destX))
+					deltaX = Math.abs(this.x - this.destX);
+				if (this.x < this.destX)
+					this.x += deltaX;
+				else
+					this.x -= deltaX;
+			}
+		}
+		
+		// Adjust facing to face the player		
+		this.facing = (level.player.x < this.x ? 1 : -1);
+	}
+	render(ctx, level) {
+		if (this.explosionStart < 0)
+			this.sprite.drawScaled(ctx, this.x, this.y, this.facing, 1);
+		else
+			BigExplosionSprite.draw(ctx, this.x, this.y);
 	}
 }
 
@@ -154,6 +200,16 @@ class Sprite
 	{
 		if (!this.ready) return;
 		ctx.drawImage(this.img, x - this.origin.x, y - this.origin.y);
+	}
+	drawScaled(ctx, x, y, xScale, yScale)
+	{
+		if (!this.ready) return;
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(xScale, yScale);
+		ctx.translate(-this.origin.x, -this.origin.y);
+		ctx.drawImage(this.img, 0, 0);
+		ctx.restore();
 	}
 }
 

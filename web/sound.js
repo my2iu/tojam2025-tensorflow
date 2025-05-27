@@ -8,7 +8,9 @@ class NullAudioEngine {
 		this.isNullAudio = true;
 	}
 	load(tag, oggFile, wavFile, simultaneousCount) {}
+	loadMp3(tag, mp3File, simultaneousCount) {}
 	loadMusic(tag, oggFile, wavFile) {}
+	loadMp3Music (tag, mp3File) {}
 	playMusic(tag) {}
 	playOneShot(tag) {}
 	playOneMusic(tag) {}
