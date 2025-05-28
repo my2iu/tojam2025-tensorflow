@@ -297,11 +297,8 @@ window.drawRobot = function(pose)
 	let headAnchorX = (shoulderMidX - hipMidX) * headTorsoRatio + shoulderMidX;
 	let headAnchorY = (shoulderMidY - hipMidY) * headTorsoRatio + shoulderMidY;
 	// Figure out the head facing based on the nose
-	let headAnchorRelative = [headAnchorX - shoulderMidX, headAnchorY - shoulderMidY];
-	let headAnchorRelativeLength = length(headAnchorRelative[0], headAnchorRelative[1]);
-	let headAnchorRelativeUnit = [headAnchorRelative[0] / headAnchorRelativeLength, headAnchorRelative[1] / headAnchorRelativeLength];
-	let noseRelative = [pose.nose.x - shoulderMidX, pose.nose.y - shoulderMidY];
-	let noseDotProduct = noseRelative[0] * headAnchorRelativeUnit[1] + noseRelative[1] * -headAnchorRelativeUnit[0];
+	let headProject = projectPointToLineSegment(shoulderMidX, shoulderMidY, headAnchorX, headAnchorY, pose.nose.x, pose.nose.y);
+	let noseDotProduct = headProject.perpendicular;
 	let headFacing = noseDotProduct / ((robotParts.head.width + 1) * 0.15);
 	if (headFacing < -1) 
 		headFacing = -1;
@@ -309,10 +306,14 @@ window.drawRobot = function(pose)
 		headFacing = 1;
 	else
 		headFacing = 0;
+
 	// Calculate a general facing, and draw the appropriate arms
 	// and legs behind the body
+	let legFacing = calculateLegFacing(pose.l) + calculateLegFacing(pose.r);
+	legFacing = Math.sign(-legFacing + headFacing);
+	
 	// TODO: Use leg bending to determine facing
-	const facing = headFacing;
+	const facing = legFacing;
 
 	const leftBehind = (facing > 0);
 	const rightBehind = (facing < 0);
@@ -365,6 +366,35 @@ window.drawRobot = function(pose)
 		drawArm(pose.r);
 	}
 };
+
+window.projectPointToLineSegment = function(lineBaseX, lineBaseY, lineX2, lineY2, ptX, ptY)
+{
+	let deltaLineX = lineX2 - lineBaseX;
+	let deltaLineY = lineY2 - lineBaseY;
+	let deltaLineLength = length(deltaLineX, deltaLineY);
+	let deltaLineXUnit = deltaLineX / deltaLineLength;
+	let deltaLineYUnit = deltaLineY / deltaLineLength;
+	
+	let deltaPtX = ptX - lineBaseX;
+	let deltaPtY = ptY - lineBaseY;
+	
+	let ptDotProduct = deltaPtX * deltaLineXUnit + deltaPtY * deltaLineYUnit;
+	let ptPerpDotProduct = deltaPtX * deltaLineYUnit + deltaPtY * -deltaLineXUnit;
+	
+	return {
+		parallel: ptDotProduct,
+		parallelRelative: ptDotProduct / deltaLineLength,
+		perpendicular: ptPerpDotProduct,
+		length: deltaLineLength
+	};
+}
+
+function calculateLegFacing(lrPose)
+{
+	let projection = projectPointToLineSegment(lrPose.hip.x, lrPose.hip.y, lrPose.ankle.x, lrPose.ankle.y, lrPose.knee.x, lrPose.knee.y);
+	let facing = Math.sign(projection.perpendicular);
+	return facing;
+}
 
 class RobotPart{
 	constructor(file, pivotX, pivotY, anchorX, anchorY) {

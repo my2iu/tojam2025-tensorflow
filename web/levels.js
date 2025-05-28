@@ -13,6 +13,9 @@ window.startLevel1 = function(gameData)
 	level.player = new RobotPlayer();
 	level.gameObjects.push(new Tank(500, 320).scheduleMove(3000, 640, 320, 500));
 	level.gameObjects.push(new Tank(200, 335));
+	level.gameObjects.push(new TreeObject(230, 300));
+	level.gameObjects.push(new TreeObject(550, 300));
+	level.gameObjects.push(new TreeObject(550, 330));
 	level.gameObjects.push(level.player);
 	level.numEnemies = 2;
 	level.nextLevel = startLevel1;
@@ -27,6 +30,7 @@ window.startLevel2 = function(gameData)
 function makeStandardGameLoopForLevel(level)
 {
 	let totalTime = 0;
+	let isOver = false;
 	return (ctx, deltaTime, pose, gameData) => {
 		totalTime += deltaTime;
 		
@@ -37,11 +41,14 @@ function makeStandardGameLoopForLevel(level)
 		ctx.fillRect(0, 200, 640, 160);
 		
 		
-		// Simulate other objects
-		level.run(deltaTime, totalTime, pose);
+		if (!isOver)
+		{
+			// Simulate other objects
+			level.run(deltaTime, totalTime, pose);
 
-		// Remove dead objects
-		level.removeDeadObjects();
+			// Remove dead objects
+			level.removeDeadObjects();
+		}
 
 		// Render everything
 		level.render(ctx);
@@ -51,6 +58,7 @@ function makeStandardGameLoopForLevel(level)
 			&& level.nextLevel)
 		{
 			gameData.nextGameLoop = level.nextLevel;
+			isOver = true;
 		}
 	};
 }
@@ -76,6 +84,9 @@ class LevelState
 			this.endLevelTime = totalTime + 1500;
 	}
 	render(ctx) {
+		// Sort the objects so that objects in back are drawn first
+		this.gameObjects.sort((a, b) =>  a.sortY() < b.sortY());
+		
 		// display other objects
 		for (let obj of this.gameObjects) {
 			obj.render(ctx, this);
@@ -88,9 +99,28 @@ class GameObject
 	constructor() {
 		this.isDead = false;
 	}
+	sortY() { return 0; }
 	run(deltaTime, elapsedTime, level, pose) {
 	}
 	render(ctx, level) {
+	}
+	checkHit(x, y, tankX, tankY, width, height) {
+		if (Math.abs(x - tankX) > 20 + width) 
+			return false;
+		if (y - tankY < height && y - tankY > -20 - height)
+			return true;
+		return false;
+	}
+	checkPunchOrKick(pose, width, height) {
+		// Object should die if it is stepped on or punched
+		// Use an area of 20 pixels around the hand or feet
+		// Plus 50 pixels horizontally and 20 pixels vertically for hitbox
+		if (this.checkHit(pose.l.wrist.x, pose.l.wrist.y, this.x, this.y, width, height)
+			|| this.checkHit(pose.r.wrist.x, pose.r.wrist.y, this.x, this.y, width, height)
+			|| this.checkHit(pose.l.ankle.x, pose.l.ankle.y, this.x, this.y, width, height)
+			|| this.checkHit(pose.r.ankle.x, pose.r.ankle.y, this.x, this.y, width, height))
+				return true;
+		return false;
 	}
 }
 
@@ -102,6 +132,7 @@ class RobotPlayer extends GameObject
 		this.x = 0;
 		this.y = 0;
 	}
+	sortY() { return this.y; }
 	run(deltaTime, elapsedTime, level, pose) {
 		this.pose = pose;
 		// Set the x and y position based on the foot that's closest
@@ -128,8 +159,29 @@ class SpriteObject extends GameObject
 		this.y = y;
 		this.sprite = sprite;
 	}
+	sortY() { return this.y; }
 	render(ctx, level) {
 		this.sprite.draw(ctx, this.x, this.y);
+	}
+}
+
+class TreeObject extends SpriteObject
+{
+	constructor(x, y) {
+		super(TreeSprite, x, y);
+		this.isTrunk = false;
+	}
+	run(deltaTime, elapsedTime, level, pose) {
+		// Object should die if it is stepped on or punched
+		if (!this.isTrunk && this.checkPunchOrKick(pose, 22, 50)) {
+			this.isTrunk = true;
+		}
+	}
+	render(ctx, level) {
+		if (!this.isTrunk)
+			this.sprite.draw(ctx, this.x, this.y);
+		else
+			TrunkSprite.draw(ctx, this.x, this.y);
 	}
 }
 
@@ -163,21 +215,10 @@ class Tank extends SpriteObject
 		// Object should die if it is stepped on or punched
 		// Use an area of 20 pixels around the hand or feet
 		// Plus 50 pixels horizontally and 20 pixels vertically for hitbox
-		if (checkHit(pose.l.wrist.x, pose.l.wrist.y, this.x, this.y)
-			|| checkHit(pose.r.wrist.x, pose.r.wrist.y, this.x, this.y)
-			|| checkHit(pose.l.ankle.x, pose.l.ankle.y, this.x, this.y)
-			|| checkHit(pose.r.ankle.x, pose.r.ankle.y, this.x, this.y)) {
+		if (this.checkPunchOrKick(pose, 50, 20)) {
 				AudioInstance.playOneShot('bigExplosion');
 				this.explosionStart = elapsedTime;
 				return;
-		}
-		
-		function checkHit(x, y, tankX, tankY) {
-			if (Math.abs(x - tankX) > 20 + 50) 
-				return false;
-			if (y - tankY < 20 && y - tankY > -20 - 20)
-				return true;
-			return false;
 		}
 		
 		// Do any movement
@@ -244,7 +285,7 @@ class Sprite
 let TankSprite = new Sprite('imgs/tank.png', 58, 35); // w:108, h:36
 let UfoSprite = new Sprite('imgs/ufo.png', 43, 15); // w:86, h:28
 let TreeSprite = new Sprite('imgs/tree.png', 18, 50);
-let TrunkSprite = new Sprite('imgs/tree.png', 16, 8);
+let TrunkSprite = new Sprite('imgs/trunk.png', 16, 8);
 let BulletSprite = new Sprite('imgs/bullet.png', 4, 4);
 let ExplosionSprite = new Sprite('imgs/kenneyExplosion00-20.webp', 10, 9);
 let BigExplosionSprite = new Sprite('imgs/kenneyExplosion06-100.webp', 50, 67);
