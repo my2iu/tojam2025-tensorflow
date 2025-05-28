@@ -31,7 +31,7 @@ window.startGame = function(webcamDeviceId) {
 		currentWebcamStream = stream;
 		document.querySelector('.game video').srcObject = stream;
 	}).then(() => loadTensorFlow())
-	.then(() => loadedAndReady());
+	.then(() => loadedAndReady(startLevel1));
 	
 	// Hook the debug stop button
 	document.querySelector('.debug a.debugStop').onclick = () => {
@@ -82,14 +82,14 @@ async function loadTensorFlow()
 	poseDetector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
 }
 
-function loadedAndReady()
+function loadedAndReady(levelStarter)
 {
 	// Start game loop
 	let lastTime = performance.now();
 	animationFrameRequest = requestAnimationFrame(gameLoop);
 	let poseOk = false;
 	let gameData = { nextGameLoop: null };
-	let levelGameLoop = startLevel1(gameData);
+	let levelGameLoop = levelStarter(gameData);
 	
 	function gameLoop()
 	{
@@ -132,6 +132,32 @@ function loadedAndReady()
 		} finally {
 			ctx.restore();
 		}
+	}
+}
+
+window.forceLevelChange = function(newLevel)
+{
+	if (animationFrameRequest == null) return;
+	cancelAnimationFrame(animationFrameRequest);
+	animationFrameRequest = null;
+	switch (newLevel)
+	{
+		case 1:
+			loadedAndReady(startLevel1);
+			break;
+		case 2:
+			loadedAndReady(startLevel2);
+			break;
+		case 3:
+			loadedAndReady(startLevel3);
+			break;
+		case 4:
+			loadedAndReady(startLevel4);
+			break;
+		case 5:
+			loadedAndReady(startLevel5);
+			break;
+		
 	}
 }
 
@@ -392,8 +418,11 @@ window.projectPointToLineSegment = function(lineBaseX, lineBaseY, lineX2, lineY2
 function calculateLegFacing(lrPose)
 {
 	let projection = projectPointToLineSegment(lrPose.hip.x, lrPose.hip.y, lrPose.ankle.x, lrPose.ankle.y, lrPose.knee.x, lrPose.knee.y);
-	let facing = Math.sign(projection.perpendicular);
-	return facing;
+	if (projection.perpendicular < -3)
+		return -1;
+	if (projection.perpendicular > 3)
+		return 1;
+	return 0;
 }
 
 class RobotPart{

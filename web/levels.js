@@ -5,27 +5,103 @@
 // that makes the user stand in a T-pose to "power-on" the robot
 // (like a magical robot transformation), then I can get measurements
 // of different body parts
-window.startLevel1 = function(gameData)
+function startLevel1(gameData)
 { 
-	//AudioInstance.loadMp3('bigExplosion', 'audio/Boom29.mp3', 3);
 	AudioInstance.loadMp3('bigExplosion', 'audio/Boom9.mp3', 3);
 	let level = new LevelState();
 	level.player = new RobotPlayer();
-	level.gameObjects.push(new Tank(500, 320).scheduleMove(3000, 640, 320, 500));
-	level.gameObjects.push(new Tank(200, 335));
-	level.gameObjects.push(new TreeObject(230, 300));
-	level.gameObjects.push(new TreeObject(550, 300));
-	level.gameObjects.push(new TreeObject(550, 330));
+	level.gameObjects.push(new Tank(500, 320));
+	level.gameObjects.push(new TreeObject(70, 325));
+	level.gameObjects.push(new TreeObject(560, 210));
+	level.gameObjects.push(new TreeObject(600, 350));
 	level.gameObjects.push(level.player);
-	level.numEnemies = 2;
-	level.nextLevel = startLevel1;
+	level.numEnemies = 1;
+	level.nextLevel = startLevel2;
 	
 	return makeStandardGameLoopForLevel(level);
 }
+window.startLevel1 = startLevel1;
 
-window.startLevel2 = function(gameData)
+function startLevel2(gameData)
 {
+	AudioInstance.loadMp3('bigExplosion', 'audio/Boom9.mp3', 3);
+	AudioInstance.loadMp3('littleExplosion', 'audio/Boom29.mp3', 3);
+	AudioInstance.loadMp3('shoot', 'audio/shoot.mp3', 3);
+	let level = new LevelState();
+	level.player = new RobotPlayer();
+	level.gameObjects.push(new Tank(0, 0).scheduleMove(500, 700, 320, 500));
+	level.gameObjects.push(new Tank(0, 0).scheduleMove(1500, 700, 230, 450));
+	level.gameObjects.push(new Tank(0, 0).scheduleMove(3500, 700, 350, 200));
+	level.gameObjects.push(new TreeObject(230, 270));
+	level.gameObjects.push(new TreeObject(550, 230));
+	level.gameObjects.push(level.player);
+	level.numEnemies = 3;
+	level.nextLevel = startLevel3;
+	
+	return makeStandardGameLoopForLevel(level);
 }
+window.startLevel2 = startLevel2;
+
+function startLevel3(gameData)
+{
+	AudioInstance.loadMp3('bigExplosion', 'audio/Boom9.mp3', 3);
+	AudioInstance.loadMp3('littleExplosion', 'audio/Boom29.mp3', 3);
+	AudioInstance.loadMp3('shoot', 'audio/shoot.mp3', 3);
+	let level = new LevelState();
+	level.player = new RobotPlayer();
+	level.gameObjects.push(new Tank(0, 0).scheduleMove(1500, 700, 320, 500).shootFrequency(2000));
+	level.gameObjects.push(new Tank(0, 0).scheduleMove(500, -50, 260, 200).shootFrequency(1500));
+	level.gameObjects.push(new TreeObject(230, 270));
+	level.gameObjects.push(new TreeObject(550, 230));
+	level.gameObjects.push(level.player);
+	level.numEnemies = 2;
+	level.nextLevel = startLevel4;
+	
+	return makeStandardGameLoopForLevel(level);
+}
+window.startLevel3 = startLevel3;
+
+function startLevel4(gameData)
+{
+	AudioInstance.loadMp3('bigExplosion', 'audio/Boom9.mp3', 3);
+	AudioInstance.loadMp3('littleExplosion', 'audio/Boom29.mp3', 3);
+	AudioInstance.loadMp3('shoot', 'audio/shoot.mp3', 3);
+	let level = new LevelState();
+	level.player = new RobotPlayer();
+	level.gameObjects.push(new Ufo(50, 50).shootFrequency(2000));
+	level.gameObjects.push(new TreeObject(230, 270));
+	level.gameObjects.push(new TreeObject(550, 230));
+	level.gameObjects.push(level.player);
+	level.numEnemies = 1;
+	level.nextLevel = startLevel5;
+	
+	return makeStandardGameLoopForLevel(level);
+}
+window.startLevel4 = startLevel4;
+
+function startLevel5(gameData)
+{
+	AudioInstance.loadMp3('bigExplosion', 'audio/Boom9.mp3', 3);
+	AudioInstance.loadMp3('littleExplosion', 'audio/Boom29.mp3', 3);
+	AudioInstance.loadMp3('shoot', 'audio/shoot.mp3', 3);
+	let level = new LevelState();
+	level.player = new RobotPlayer();
+	if (Math.random() > 0.5)
+		level.gameObjects.push(new Ufo(700 , Math.random() * 300).shootFrequency(2000));
+	else
+		level.gameObjects.push(new Ufo(-50 , Math.random() * 300).shootFrequency(2000));
+	level.gameObjects.push(new Tank(0, 0).scheduleMove(Math.random() * 3000, 700, Math.random() * 160 + 200, 500).shootFrequency(2000));
+	level.gameObjects.push(new Tank(0, 0).scheduleMove(Math.random() * 3000, -50, Math.random() * 160 + 200, 500).shootFrequency(1500));
+	level.gameObjects.push(new TreeObject(230, 270));
+	level.gameObjects.push(new TreeObject(550, 230));
+	level.gameObjects.push(level.player);
+	level.numEnemies = 3;
+	level.nextLevel = startLevel5;
+	
+	return makeStandardGameLoopForLevel(level);
+}
+window.startLevel5 = startLevel5;
+
 
 function makeStandardGameLoopForLevel(level)
 {
@@ -193,12 +269,19 @@ class Tank extends SpriteObject
 		this.explosionStart = -1;
 		this.startTime = 0;
 		this.destX = x;
+		this.shootEvery = 10000000;
+		this.lastShot = 0;
 	}
 	scheduleMove(time, x, y, destX) {
 		this.startTime = time;
 		this.x = x;
 		this.y = y;
 		this.destX = destX;
+		return this;
+	}
+	shootFrequency(time)
+	{
+		this.shootEvery = time;
 		return this;
 	}
 	run(deltaTime, elapsedTime, level, pose) {
@@ -235,6 +318,16 @@ class Tank extends SpriteObject
 				else
 					this.x -= deltaX;
 			}
+			
+			if (this.shootEvery < elapsedTime - this.lastShot - this.startTime)
+			{
+				let angle = -Math.PI / 4;
+				if (this.facing > 0)
+					angle = -3 * Math.PI / 4;
+				level.gameObjects.push(new Bullet(this.x, this.y-20, angle));
+				this.lastShot = elapsedTime;
+				AudioInstance.playOneShot('shoot');
+			}
 		}
 		
 		// Adjust facing to face the player		
@@ -248,6 +341,129 @@ class Tank extends SpriteObject
 	}
 }
 
+class Ufo extends SpriteObject
+{
+	constructor(x, y) {
+		super(UfoSprite, x, y);
+		this.explosionStart = -1;
+		this.destX = x;
+		this.destY = y;
+		this.shootEvery = 10000000;
+		this.lastShot = 0;
+	}
+	shootFrequency(time)
+	{
+		this.shootEvery = time;
+		return this;
+	}
+	run(deltaTime, elapsedTime, level, pose) {
+		if (this.explosionStart >= 0)
+		{
+			if (elapsedTime - this.explosionStart > 300)
+			{
+				this.isDead = true;
+				level.numEnemies--;
+			}
+			return;
+		}
+
+		// Object should die if it is stepped on or punched
+		// Use an area of 20 pixels around the hand or feet
+		// Plus 50 pixels horizontally and 20 pixels vertically for hitbox
+		if (this.checkPunchOrKick(pose, 50, 20)) {
+				AudioInstance.playOneShot('bigExplosion');
+				this.explosionStart = elapsedTime;
+				return;
+		}
+		
+		// Do any movement
+		const MOVE_RATE = 0.1;
+		let deltaX = deltaTime * MOVE_RATE;
+		let distToMove = this.length(this.destX - this.x, this.destY - this.y);
+		if (deltaX > distToMove)
+		{
+			deltaX = Math.abs(this.x - this.destX);
+			this.destX = Math.random() * 640;
+			this.destY = Math.random() * 300;
+		}
+		let angle = Math.atan2(this.destY - this.y, this.destX - this.x);
+		this.x += deltaX * Math.cos(angle);
+		this.y += deltaX * Math.sin(angle);
+		
+		if (this.shootEvery < elapsedTime - this.lastShot)
+		{
+			let angle = Math.atan2((pose.l.hip.y + pose.l.shoulder.y) / 2 - this.y,
+			(pose.l.hip.x + pose.l.shoulder.x) / 2 - this.x);
+			level.gameObjects.push(new Bullet(this.x, this.y-20, angle));
+			this.lastShot = elapsedTime;
+			AudioInstance.playOneShot('shoot');
+		}
+		
+		// Adjust facing to face the player		
+		this.facing = (level.player.x < this.x ? 1 : -1);
+	}
+	render(ctx, level) {
+		if (this.explosionStart < 0)
+			this.sprite.drawScaled(ctx, this.x, this.y, this.facing, 1);
+		else
+			BigExplosionSprite.draw(ctx, this.x, this.y);
+	}
+	length(dx, dy) {
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+
+}
+
+class Bullet extends SpriteObject
+{
+	constructor(x, y, angle) {
+		super(BulletSprite, x, y);
+		this.angle = angle;
+		this.forcedY = 500;
+		this.explosionStart = -1;
+	}
+	sortY() { return this.forcedY; }
+	run(deltaTime, elapsedTime, level, pose) {
+		if (this.explosionStart >= 0)
+		{
+			if (elapsedTime - this.explosionStart > 300)
+			{
+				this.isDead = true;
+			}
+			return;
+		}
+
+		// Object should die if it is stepped on or punched
+		// Use an area of 20 pixels around the hand or feet
+		// Plus 50 pixels horizontally and 20 pixels vertically for hitbox
+		let collision = projectPointToLineSegment(
+			(pose.l.hip.x + pose.r.hip.x) / 2,
+			(pose.l.hip.y + pose.r.hip.y) / 2,
+			(pose.l.shoulder.x + pose.r.shoulder.x) / 2,
+			(pose.l.shoulder.y + pose.r.shoulder.y) / 2,
+			this.x, this.y);
+		if (Math.abs(collision.perpendicular) < 20 && 
+			collision.parallelRelative > 0 && collision.parallelRelative < 1)
+		{
+				AudioInstance.playOneShot('littleExplosion');
+				this.explosionStart = elapsedTime;
+				return;
+		}
+		
+		const MOVE_RATE = 0.15;
+		this.x += Math.cos(this.angle) * MOVE_RATE * deltaTime;
+		this.y += Math.sin(this.angle) * MOVE_RATE * deltaTime;
+		
+		if (this.x < -100 || this.y < -100 || this.x > 700 || this.y > 400)
+			this.isDead = true;
+	}
+	render(ctx, level) {
+		if (this.explosionStart < 0)
+			this.sprite.draw(ctx, this.x, this.y);
+		else
+			ExplosionSprite.draw(ctx, this.x, this.y);
+	}
+}
 
 class Sprite
 {
